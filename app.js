@@ -10,6 +10,7 @@ const cards = require('./routes/cards');
 const users = require('./routes/users');
 
 const { login, createUser } = require('./controllers/user');
+const { requestLogger, errorLogger } = require('./middlewares/logger');
 
 const { PORT = 3000, BASE_PATH } = process.env;
 const app = express();
@@ -26,6 +27,7 @@ mongoose.connect("mongodb://localhost:27017/mestodb", {
   useFindAndModify: false,
 });
 
+app.use(requestLogger);
 app.use(limiter);
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.json());
@@ -37,6 +39,8 @@ app.use('/cards', cards);
 app.use('/users', users);
 app.post('/signin', login);
 app.post('/signup', createUser);
+
+app.use(errorLogger);
 
 app.use((err, req, res) => {
   res.status(404).send({ "message": "Запрашиваемый ресурс не найден" });
