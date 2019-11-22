@@ -1,3 +1,4 @@
+require('dotenv').config();
 const express = require('express');
 const rateLimit = require('express-rate-limit');
 const bodyParser = require("body-parser");
@@ -12,7 +13,7 @@ const users = require('./routes/users');
 const { login, createUser } = require('./controllers/user');
 const { requestLogger, errorLogger } = require('./middlewares/logger');
 
-const { PORT = 3000, BASE_PATH } = process.env;
+const { PORT = 3000 } = process.env;
 const app = express();
 
 const limiter = rateLimit({
@@ -27,13 +28,14 @@ mongoose.connect("mongodb://localhost:27017/mestodb", {
   useFindAndModify: false,
 });
 
-app.use(requestLogger);
 app.use(limiter);
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(cookieParser());
 app.use(helmet());
+
+app.use(requestLogger);
 
 app.use('/cards', cards);
 app.use('/users', users);
@@ -47,7 +49,4 @@ app.use((err, req, res) => {
   res.status(500).send({ "message": 'На сервере произошла ошибка' });
 });
 
-app.listen(PORT, () => {
-  console.log('Ссылка на сервер:');
-  console.log(BASE_PATH);
-});
+app.listen(PORT);
