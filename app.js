@@ -12,7 +12,7 @@ const users = require('./routes/users');
 const { login, createUser } = require('./controllers/user');
 const { requestLogger, errorLogger } = require('./middlewares/logger');
 
-const { PORT = 80, BASE_PATH } = process.env;
+const { PORT = 3000, BASE_PATH } = process.env;
 const app = express();
 
 const limiter = rateLimit({
