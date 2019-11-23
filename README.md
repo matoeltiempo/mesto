@@ -12,4 +12,7 @@ npm run start
 # develop
 npm run dev
 ```
-### Сервер будет доступен по [адресу](localhost:3000)
+### Сервер будет доступен по [адресу](http://matoeltiempo.site/users)
+http://84.201.185.102/
+
+http://matoeltiempo.site
