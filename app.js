@@ -13,6 +13,7 @@ const users = require('./routes/users');
 
 const { login, createUser } = require('./controllers/user');
 const { requestLogger, errorLogger } = require('./middlewares/logger');
+const NotFoundError = require('./errors/not-found-error');
 
 const { PORT = 3000 } = process.env;
 const app = express();
@@ -29,13 +30,12 @@ mongoose.connect("mongodb://localhost:27017/mestodb", {
   useFindAndModify: false,
 });
 
+app.use(helmet());
 app.use(limiter);
+app.use(cookieParser());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
-app.use(cookieParser());
-app.use(helmet());
-
 app.use(requestLogger);
 
 app.get('/crash-test', () => {
@@ -58,20 +58,23 @@ app.post('/signup', celebrate({
   body: Joi.object().keys({
     name: Joi.string().required().min(2).max(30),
     about: Joi.string().required().min(2).max(30),
-    avatar: Joi.string().required().regex(
-      /^(http:[\/][\/]|https:[\/][\/])(((\d{1,3}[\.]){3}\d{1,3}([:]\d{2,5})?)[\/]?|(w{3}[\.])?\w+([\.]\w+)?([^www][\.][a-zA-Z]{2,5})([\/]\w+)*(#)?[\/]?)/,
-    ),
+    avatar: Joi.string().required().uri(),
     email: Joi.string().required().email(),
     password: Joi.string().required().min(8),
   }),
 }), createUser);
 
+app.use('/*', () => {
+  throw new NotFoundError('Запрашиваемый ресурс не найден');
+});
+
 app.use(errorLogger);
 app.use(errors());
-
-app.get('/:someRequest', (req, res) => {
-  res.status(404).send({ message: 'Запрашиваемый ресурс не найден' });
-  res.status(500).send({ message: 'На сервере произошла ошибка' });
+app.use((err, req, res) => {
+  const { statusCode = 500, message } = err;
+  res.status(statusCode).send({
+    message: statusCode === 500 ? 'На сервере произошла ошибка' : message,
+  });
 });
 
 app.listen(PORT);

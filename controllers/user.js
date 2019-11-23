@@ -1,25 +1,27 @@
+const { NODE_ENV, JWT_SECRET } = process.env;
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const User = require('../models/user');
+const NotFoundError = require('../errors/not-found-error');
+const BadRequestError = require('../errors/bad-request-error');
 
-module.exports.returnsAllUsers = (req, res) => {
+module.exports.returnsAllUsers = (req, res, next) => {
   User.find({})
     .then((users) => res.send({ data: users }))
-    .catch((err) => res.status(500).send({ message: `Произошла ошибка ${err.message}` }));
+    .catch((next));
 };
 
-module.exports.returnsUser = (req, res) => {
+module.exports.returnsUser = (req, res, next) => {
   User.findById(req.params.id)
     .then((user) => {
       if (!user) {
-        res.status(404).send({ message: `Пользователь с таким id не найден` });
+        throw new NotFoundError(`Пользователь с таким id не найден`);
       } res.send({ data: user });
     })
-    .catch(() => res.status(404).send({ message: `Пользователь с таким id не найден` }))
-    .catch((err) => res.status(500).send({ message: `Произошла ошибка ${err.message}` }));
+    .catch((next));
 };
 
-module.exports.createUser = (req, res) => {
+module.exports.createUser = (req, res, next) => {
   bcrypt.hash(req.body.password, 10)
     .then((hash) => User.create({
       name: req.body.name,
@@ -28,23 +30,27 @@ module.exports.createUser = (req, res) => {
       email: req.body.email,
       password: hash,
     }))
-    .then((user) => res.send({ user }))
-    .catch((err) => res.status(400).send({ message: `Произошла ошибка ${err.message}` }));
+    .then((user) => {
+      if (!user) {
+        throw new BadRequestError('Неверные данные пользователя');
+      } return res.send(user);
+    })
+    .catch(next);
 };
 
-module.exports.login = (req, res) => {
+module.exports.login = (req, res, next) => {
   const { email, password } = req.body;
   return User.findUserByCredentials(email, password)
     .then((user) => {
-      const token = jwt.sign({ _id: user._id }, "8ade7bf0199a3179be4d31299e6a462c65e93b3f31f8a984e8e8a10ae7ef32ac", { expiresIn: '7d' });
+      const token = jwt.sign({ _id: user._id }, NODE_ENV === 'production' ? JWT_SECRET : 'dev-secret', { expiresIn: '7d' });
       res.cookie('jwt', token, {
         maxAge: 3600000 * 24 * 7, httpOnly: true, sameSite: true,
       }).end();
     })
-    .catch((err) => res.status(401).send({ message: `Ошибка токена ${err.message}` }));
+    .catch(next);
 };
 
-module.exports.updateUser = (req, res) => {
+module.exports.updateUser = (req, res, next) => {
   const { name, about, avatar } = req.body;
   User.findByIdAndUpdate(
     req.params.id,
@@ -52,10 +58,10 @@ module.exports.updateUser = (req, res) => {
     { new: true, runValidators: true, upsert: true },
   )
     .then((user) => res.send({ data: user }))
-    .catch((err) => res.status(500).send({ message: `Произошла ошибка ${err.message}` }));
+    .catch(next);
 };
 
-module.exports.updateAvatar = (req, res) => {
+module.exports.updateAvatar = (req, res, next) => {
   const { avatar } = req.body;
   User.findByIdAndUpdate(
     req.params.id,
@@ -63,5 +69,5 @@ module.exports.updateAvatar = (req, res) => {
     { new: true, runValidators: true, upsert: true },
   )
     .then((user) => res.send({ data: user }))
-    .catch((err) => res.status(500).send({ message: `Произошла ошибка ${err.message}` }));
+    .catch(next);
 };
