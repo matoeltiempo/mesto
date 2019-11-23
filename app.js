@@ -3,15 +3,18 @@ const express = require('express');
 const rateLimit = require('express-rate-limit');
 const bodyParser = require("body-parser");
 const cookieParser = require("cookie-parser");
+const { errors } = require('celebrate');
 const path = require('path');
 const mongoose = require('mongoose');
 const helmet = require('helmet');
 
-const cards = require('./routes/cards');
-const users = require('./routes/users');
+const cardsRouter = require('./routes/cards');
+const usersRouter = require('./routes/users');
+const createUserRouter = require('./routes/create-user');
+const loginRouter = require('./routes/login');
 
-const { login, createUser } = require('./controllers/user');
 const { requestLogger, errorLogger } = require('./middlewares/logger');
+const NotFoundError = require('./errors/not-found-error');
 
 const { PORT = 3000 } = process.env;
 const app = express();
@@ -28,25 +31,36 @@ mongoose.connect("mongodb://localhost:27017/mestodb", {
   useFindAndModify: false,
 });
 
+app.use(helmet());
 app.use(limiter);
+app.use(cookieParser());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
-app.use(cookieParser());
-app.use(helmet());
-
 app.use(requestLogger);
 
-app.use('/cards', cards);
-app.use('/users', users);
-app.post('/signin', login);
-app.post('/signup', createUser);
+app.get('/crash-test', () => {
+  setTimeout(() => {
+    throw new Error('Сервер сейчас упадёт');
+  }, 0);
+});
+
+app.use('/cards', cardsRouter);
+app.use('/users', usersRouter);
+app.use('/signup', createUserRouter);
+app.use('/signin', loginRouter);
+
+app.use('/*', () => {
+  throw new NotFoundError(NotFoundError);
+});
 
 app.use(errorLogger);
 
+app.use(errors());
+
 app.use((err, req, res) => {
-  res.status(404).send({ "message": "Запрашиваемый ресурс не найден" });
-  res.status(500).send({ "message": 'На сервере произошла ошибка' });
+  const { statusCode = 500, message } = err;
+  res.status(statusCode).send({ message: statusCode === 500 ? 'На сервере произошла ошибка' : message });
 });
 
 app.listen(PORT);
