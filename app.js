@@ -3,15 +3,16 @@ const express = require('express');
 const rateLimit = require('express-rate-limit');
 const bodyParser = require("body-parser");
 const cookieParser = require("cookie-parser");
-const { errors, celebrate, Joi } = require('celebrate');
+const { errors} = require('celebrate');
 const path = require('path');
 const mongoose = require('mongoose');
 const helmet = require('helmet');
 
 const cards = require('./routes/cards');
 const users = require('./routes/users');
+const usersRouter = require('./routes/create-user');
+const loginRouter = require('./routes/login');
 
-const { login, createUser } = require('./controllers/user');
 const { requestLogger, errorLogger } = require('./middlewares/logger');
 const NotFoundError = require('./errors/not-found-error');
 
@@ -46,23 +47,8 @@ app.get('/crash-test', () => {
 
 app.use('/cards', cards);
 app.use('/users', users);
-
-app.post('/signin', celebrate({
-  body: Joi.object().keys({
-    email: Joi.string().required().email(),
-    password: Joi.string().required().min(8),
-  }),
-}), login);
-
-app.post('/signup', celebrate({
-  body: Joi.object().keys({
-    name: Joi.string().required().min(2).max(30),
-    about: Joi.string().required().min(2).max(30),
-    avatar: Joi.string().required().uri(),
-    email: Joi.string().required().email(),
-    password: Joi.string().required().min(8),
-  }),
-}), createUser);
+app.use('/users', usersRouter);
+app.use('/signin', loginRouter);
 
 app.use('/*', () => {
   throw new NotFoundError('Запрашиваемый ресурс не найден');
@@ -70,6 +56,7 @@ app.use('/*', () => {
 
 app.use(errorLogger);
 app.use(errors());
+
 app.use((err, req, res) => {
   const { statusCode = 500, message } = err;
   res.status(statusCode).send({

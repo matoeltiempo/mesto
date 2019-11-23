@@ -16,7 +16,7 @@ module.exports.returnsUser = (req, res, next) => {
     .then((user) => {
       if (!user) {
         throw new NotFoundError(`Пользователь с таким id не найден`);
-      } res.send({ data: user });
+      } else res.send({ data: user });
     })
     .catch((next));
 };
