@@ -14,3 +14,4 @@ npm run dev
 ```
 ### Сервер будет доступен по [адресу](http://matoeltiempo.site/users)
 http://84.201.185.102/
+http://matoeltiempo.site
