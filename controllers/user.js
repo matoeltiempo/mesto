@@ -11,15 +11,14 @@ module.exports.returnsAllUsers = (req, res, next) => {
     .catch((next));
 };
 
-module.exports.returnsUser = (req, res, next) => {
-  User.findById(req.params.id)
-    .then((user) => {
-      if (!user) {
-        throw new NotFoundError(`Пользователь с таким id не найден`);
-      } else res.send({ data: user });
-    })
-    .catch((next));
-};
+module.exports.returnsUser = (req, res, next) => User
+  .findOne({ _id: req.params.userId })
+  .then((user) => {
+    if (!user) {
+      throw new NotFoundError('Нет пользователя с таким id');
+    } res.send(user);
+  })
+  .catch(next);
 
 module.exports.createUser = (req, res, next) => {
   bcrypt.hash(req.body.password, 10)
@@ -33,7 +32,7 @@ module.exports.createUser = (req, res, next) => {
     .then((user) => {
       if (!user) {
         throw new BadRequestError('Неверные данные пользователя');
-      } return res.send(user);
+      } res.send(user);
     })
     .catch(next);
 };

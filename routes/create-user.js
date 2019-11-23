@@ -1,8 +1,8 @@
 const { celebrate, Joi } = require('celebrate');
-const router = require('express').Router();
+const createUserRouter = require('express').Router();
 const { createUser } = require('../controllers/user');
 
-router.post('/', celebrate({
+createUserRouter.post('/', celebrate({
   body: Joi.object().keys({
     name: Joi.string().required().min(2).max(30),
     about: Joi.string().required().min(2).max(30),
@@ -12,4 +12,4 @@ router.post('/', celebrate({
   }),
 }), createUser);
 
-module.exports = router;
+module.exports = createUserRouter;

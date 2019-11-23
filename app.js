@@ -3,14 +3,14 @@ const express = require('express');
 const rateLimit = require('express-rate-limit');
 const bodyParser = require("body-parser");
 const cookieParser = require("cookie-parser");
-const { errors} = require('celebrate');
+const { errors } = require('celebrate');
 const path = require('path');
 const mongoose = require('mongoose');
 const helmet = require('helmet');
 
-const cards = require('./routes/cards');
-const users = require('./routes/users');
-const usersRouter = require('./routes/create-user');
+const cardsRouter = require('./routes/cards');
+const usersRouter = require('./routes/users');
+const createUserRouter = require('./routes/create-user');
 const loginRouter = require('./routes/login');
 
 const { requestLogger, errorLogger } = require('./middlewares/logger');
@@ -45,23 +45,22 @@ app.get('/crash-test', () => {
   }, 0);
 });
 
-app.use('/cards', cards);
-app.use('/users', users);
+app.use('/cards', cardsRouter);
 app.use('/users', usersRouter);
+app.use('/signup', createUserRouter);
 app.use('/signin', loginRouter);
 
 app.use('/*', () => {
-  throw new NotFoundError('Запрашиваемый ресурс не найден');
+  throw new NotFoundError(NotFoundError);
 });
 
 app.use(errorLogger);
+
 app.use(errors());
 
 app.use((err, req, res) => {
   const { statusCode = 500, message } = err;
-  res.status(statusCode).send({
-    message: statusCode === 500 ? 'На сервере произошла ошибка' : message,
-  });
+  res.status(statusCode).send({ message: statusCode === 500 ? 'На сервере произошла ошибка' : message });
 });
 
 app.listen(PORT);
