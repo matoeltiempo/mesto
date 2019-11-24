@@ -20,10 +20,12 @@ module.exports.deleteCard = (req, res, next) => {
   Card.findById(cardId)
     .then((card) => {
       if (owner === card.owner.toString()) {
-        Card.findByIdAndRemove(cardId);
+        Card.findByIdAndRemove(cardId)
+          .then(() => {
+            throw new ResOkError('Удаление прошло успешно');
+          }).catch(next);
       } throw new UnauthorizedError('Невозможно удалить карточку');
-    })
-    .catch(next);
+    }).catch(next);
 };
 
 module.exports.likeCard = (req, res, next) => {
