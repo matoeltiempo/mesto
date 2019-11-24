@@ -15,15 +15,17 @@ module.exports.createCard = (req, res, next) => {
 };
 
 module.exports.deleteCard = (req, res, next) => {
-  Card.findByIdAndRemove(req.params.cardId)
+  const owner = req.user._id;
+  const { cardId } = req.params;
+  Card.findById(cardId)
     .then((card) => {
-      const cardData = { data: card };
-      if (cardData.data.owner !== req.user._id) { throw new UnauthorizedError('Невозможно удалить карточку'); } else {
-        Card.findByIdAndRemove(req.params.cardId)
-          .then(() => res.send(cardData));
-      }
-    })
-    .catch((next));
+      if (owner === card.owner.toString()) {
+        Card.findByIdAndRemove(cardId)
+          .then(() => {
+            throw new ResOkError('Удаление прошло успешно');
+          }).catch(next);
+      } throw new UnauthorizedError('Невозможно удалить карточку');
+    }).catch(next);
 };
 
 module.exports.likeCard = (req, res, next) => {

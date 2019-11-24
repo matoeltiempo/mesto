@@ -51,7 +51,7 @@ app.use('/signup', createUserRouter);
 app.use('/signin', loginRouter);
 
 app.use('/*', () => {
-  throw new NotFoundError(NotFoundError);
+  throw new NotFoundError('Запрашиваемый ресурс не найден');
 });
 
 app.use(errorLogger);

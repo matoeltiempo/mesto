@@ -1,25 +1,27 @@
+const { NODE_ENV, JWT_SECRET } = process.env;
+
 const jwt = require('jsonwebtoken');
+const UnauthorizedError = require('../errors/unauthorized-error');
 
-const handleAuthError = (res) => {
-  res.status(401).send({ message: 'Необходима авторизация' });
-};
-
-const extractBearerToken = (header) => {
-  return header.replace('Bearer ', '');
-};
-
-module.exports = (req, res, next) => {
+const auth = (req, res, next) => {
   const { authorization } = req.headers;
   if (!authorization || !authorization.startsWith('Bearer ')) {
-    return handleAuthError(res);
+    throw new UnauthorizedError('Необходима авторизация');
   }
-  const token = extractBearerToken(authorization);
+
+  const token = authorization.replace('Bearer ', '');
   let payload;
 
   try {
-    payload = jwt.verify(token, "8ade7bf0199a3179be4d31299e6a462c65e93b3f31f8a984e8e8a10ae7ef32ac");
+    payload = jwt.verify(token, NODE_ENV === 'production' ? JWT_SECRET : 'dev-secret');
   } catch (err) {
-    return handleAuthError(res);
-  } req.user = payload;
+    throw new UnauthorizedError('Неправильные почта или пароль');
+  }
+
+  req.user = payload;
+
   next();
 };
+
+
+module.exports = auth;
