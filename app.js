@@ -50,15 +50,11 @@ app.use('/users', usersRouter);
 app.use('/signup', createUserRouter);
 app.use('/signin', loginRouter);
 
-app.use('/*', () => {
-  throw new NotFoundError('Запрашиваемый ресурс не найден');
-});
-
 app.use(errorLogger);
 
 app.use(errors());
 
-app.use((err, req, res) => {
+app.use((err, req, res, next) => {
   const { statusCode = 500, message } = err;
   res.status(statusCode).send({ message: statusCode === 500 ? 'На сервере произошла ошибка' : message });
 });
