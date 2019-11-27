@@ -1,5 +1,6 @@
 const Card = require('../models/card');
 const UnauthorizedError = require('../errors/unauthorized-error');
+const ResOkError = require('../errors/succec-error');
 
 module.exports.returnsCards = (req, res, next) => {
   Card.find({})
